@@ -3,10 +3,12 @@ package org.sopt.service;
 import org.sopt.model.Category;
 import org.sopt.model.Post;
 import org.sopt.repository.PostRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Service
 public class PostService {
 
     private final PostRepository postRepository;
