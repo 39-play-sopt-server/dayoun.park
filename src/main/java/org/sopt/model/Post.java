@@ -1,6 +1,7 @@
 package org.sopt.model;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Post {
 
@@ -8,6 +9,7 @@ public class Post {
     private String content;
     private final Category category;
     private final LocalDateTime createdAt;
+    private final AtomicInteger viewCount = new AtomicInteger(0);
 
     public Post(String title, String content, Category category) {
         validate(title, content);
@@ -53,5 +55,13 @@ public class Post {
 
         this.title = title;
         this.content = content;
+    }
+
+    public int getViewCount() {
+        return viewCount.get();
+    }
+
+    public void increaseViewCount() {
+        viewCount.incrementAndGet();
     }
 }

@@ -26,7 +26,7 @@ public class PostService {
         return postRepository.findAll();
     }
 
-    public Post readPost(int index) {
+    public Post findPost(int index){
         Post post = postRepository.findByIndex(index);
 
         if (post == null) {
@@ -36,13 +36,20 @@ public class PostService {
         return post;
     }
 
+    public Post readPost(int index) {
+        Post post = postRepository.findByIndex(index);
+        post.increaseViewCount();
+
+        return post;
+    }
+
     public void editPost(int index, String title, String content) {
-        Post post = readPost(index);
+        Post post = findPost(index);
         post.update(title, content);
     }
 
     public void removePost(int index) {
-        readPost(index);
+        findPost(index);
         postRepository.delete(index);
     }
 }
