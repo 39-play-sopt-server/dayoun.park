@@ -3,6 +3,8 @@ package org.sopt.controller;
 import org.sopt.model.Category;
 import org.sopt.model.Post;
 import org.sopt.service.PostService;
+import org.sopt.common.ApiResponse;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,20 +27,34 @@ public class PostController {
 
     @Operation(summary= "게시글 작성")
     @PostMapping
-    public String writePost(
+    public ResponseEntity<ApiResponse<Void>> writePost(
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam("category") Category category
     )
     {
         postService.writePost(title, content, category);
-        return "게시글이 작성되었습니다.";
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.<Void>success(
+                        "POST_CREATED",
+                        "게시글이 작성되었습니다.",
+                        null
+                ));
     }
 
     @Operation(summary= "게시글 목록 조회")
     @GetMapping
-    public List<Post> readPostList() {
-        return postService.readPostList();
+    public ResponseEntity<ApiResponse<List<Post>>> readPostList() {
+        List<Post> posts = postService.readPostList();
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "POST_LIST_READ",
+                        "게시글 목록을 조회했습니다.",
+                        posts
+                )
+        );
     }
 
     @Operation(
@@ -46,30 +62,51 @@ public class PostController {
             description = "게시글을 상세 조회하면 조회수가 1 증가합니다."
     )
     @GetMapping("/{postId}")
-    public Post readPost(@PathVariable("postId") int postId) {
-        return postService.readPost(postId);
+    public ResponseEntity<ApiResponse<Post>> readPost(
+            @PathVariable("postId") int postId
+    ) {
+        Post post = postService.readPost(postId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "POST_READ",
+                        "게시글을 조회했습니다.",
+                        post
+                )
+        );
     }
 
     @Operation(summary = "게시글 제목과 본문 수정")
-    @PutMapping("/{postId}")
-    public String editPost(
+    @PatchMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> editPost(
             @PathVariable("postId") int postId,
             @RequestParam("title") String title,
             @RequestParam("content") String content
     ) {
         postService.editPost(postId, title, content);
-        return "게시글이 수정되었습니다.";
+
+        return ResponseEntity.ok(
+                ApiResponse.<Void>success(
+                        "POST_UPDATED",
+                        "게시글이 수정되었습니다.",
+                        null
+                )
+        );
     }
 
     @Operation(summary = "게시글 삭제")
     @DeleteMapping("/{postId}")
-    public ResponseEntity<String> removePost(
+    public ResponseEntity<ApiResponse<Void>> removePost(
             @PathVariable("postId") int postId
     ) {
         postService.removePost(postId);
 
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body("삭제 완료");
+        return ResponseEntity.ok(
+                ApiResponse.<Void>success(
+                        "POST_DELETED",
+                        "게시글이 삭제되었습니다.",
+                        null
+                )
+        );
     }
 }
