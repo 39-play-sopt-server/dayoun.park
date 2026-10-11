@@ -6,9 +6,12 @@ import org.sopt.service.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 
+@Tag(name = "게시글", description = "게시글 작성, 조회, 수정, 삭제 API")
 @RestController
 @RequestMapping(path = "/posts")
 public class PostController {
@@ -20,6 +23,7 @@ public class PostController {
         this.postService = postService;
     }
 
+    @Operation(summary= "게시글 작성")
     @PostMapping
     public String writePost(
             @RequestParam("title") String title,
@@ -31,16 +35,22 @@ public class PostController {
         return "게시글이 작성되었습니다.";
     }
 
+    @Operation(summary= "게시글 목록 조회")
     @GetMapping
     public List<Post> readPostList() {
         return postService.readPostList();
     }
 
+    @Operation(
+            summary = "게시글 상세 조회",
+            description = "게시글을 상세 조회하면 조회수가 1 증가합니다."
+    )
     @GetMapping("/{postId}")
     public Post readPost(@PathVariable("postId") int postId) {
         return postService.readPost(postId - 1);
     }
 
+    @Operation(summary = "게시글 제목과 본문 수정")
     @PutMapping("/{postId}")
     public String editPost(
             @PathVariable("postId") int postId,
@@ -51,6 +61,7 @@ public class PostController {
         return "게시글이 수정되었습니다.";
     }
 
+    @Operation(summary = "게시글 삭제")
     @DeleteMapping("/{postId}")
     public ResponseEntity<String> removePost(
             @PathVariable("postId") int postId
