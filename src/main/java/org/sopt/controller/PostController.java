@@ -47,7 +47,7 @@ public class PostController {
     )
     @GetMapping("/{postId}")
     public Post readPost(@PathVariable("postId") int postId) {
-        return postService.readPost(postId - 1);
+        return postService.readPost(postId);
     }
 
     @Operation(summary = "게시글 제목과 본문 수정")
@@ -57,7 +57,7 @@ public class PostController {
             @RequestParam("title") String title,
             @RequestParam("content") String content
     ) {
-        postService.editPost(postId-1, title, content);
+        postService.editPost(postId, title, content);
         return "게시글이 수정되었습니다.";
     }
 
@@ -66,7 +66,7 @@ public class PostController {
     public ResponseEntity<String> removePost(
             @PathVariable("postId") int postId
     ) {
-        postService.removePost(postId-1);
+        postService.removePost(postId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
