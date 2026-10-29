@@ -1,5 +1,6 @@
 package org.sopt.controller;
 
+import org.sopt.dto.PostResponse;
 import org.sopt.model.Category;
 import org.sopt.model.Post;
 import org.sopt.service.PostService;
@@ -30,10 +31,11 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> writePost(
             @RequestParam("title") String title,
             @RequestParam("content") String content,
-            @RequestParam("category") Category category
+            @RequestParam("category") Category category,
+            @RequestParam("memberId") Long memberId
     )
     {
-        postService.writePost(title, content, category);
+        postService.writePost(title, content, category, memberId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<Void>success(
@@ -45,8 +47,8 @@ public class PostController {
 
     @Operation(summary= "게시글 목록 조회")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Post>>> readPostList() {
-        List<Post> posts = postService.readPostList();
+    public ResponseEntity<ApiResponse<List<PostResponse>>> readPostList() {
+        List<PostResponse> posts = postService.readPostList();
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -62,16 +64,16 @@ public class PostController {
             description = "게시글을 상세 조회하면 조회수가 1 증가합니다."
     )
     @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<Post>> readPost(
-            @PathVariable("postId") int postId
+    public ResponseEntity<ApiResponse<PostResponse>> readPost(
+            @PathVariable("postId") Long postId
     ) {
-        Post post = postService.readPost(postId);
+        PostResponse postResponse = postService.readPost(postId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "POST_READ",
                         "게시글을 조회했습니다.",
-                        post
+                        postResponse
                 )
         );
     }
@@ -79,7 +81,7 @@ public class PostController {
     @Operation(summary = "게시글 제목과 본문 수정")
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> editPost(
-            @PathVariable("postId") int postId,
+            @PathVariable("postId") Long postId,
             @RequestParam("title") String title,
             @RequestParam("content") String content
     ) {
@@ -97,7 +99,7 @@ public class PostController {
     @Operation(summary = "게시글 삭제")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> removePost(
-            @PathVariable("postId") int postId
+            @PathVariable("postId") Long postId
     ) {
         postService.removePost(postId);
 
