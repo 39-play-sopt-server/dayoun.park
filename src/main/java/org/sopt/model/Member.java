@@ -5,16 +5,13 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "member")
-public class Member {
+public class Member extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "name", nullable = false, length = 50)
     private String name;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
 
     protected Member() {}
 
@@ -24,7 +21,6 @@ public class Member {
         }
 
         this.name = name;
-        this.createdAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -33,9 +29,5 @@ public class Member {
 
     public String getName() {
         return name;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 }
