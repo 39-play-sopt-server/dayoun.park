@@ -1,21 +1,25 @@
 package org.sopt.model;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Post {
 
     private String title;
     private String content;
+    private final int id;
     private final Category category;
     private final LocalDateTime createdAt;
+    private final AtomicInteger viewCount = new AtomicInteger(0);
 
-    public Post(String title, String content, Category category) {
+    public Post(int id, String title, String content, Category category) {
         validate(title, content);
 
         if (category == null) {
             throw new IllegalArgumentException("카테고리는 필수입니다.");
         }
 
+        this.id = id;
         this.title = title;
         this.content = content;
         this.category = category;
@@ -30,6 +34,10 @@ public class Post {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("본문은 비어 있을 수 없습니다.");
         }
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getTitle() {
@@ -53,5 +61,13 @@ public class Post {
 
         this.title = title;
         this.content = content;
+    }
+
+    public int getViewCount() {
+        return viewCount.get();
+    }
+
+    public void increaseViewCount() {
+        viewCount.incrementAndGet();
     }
 }
