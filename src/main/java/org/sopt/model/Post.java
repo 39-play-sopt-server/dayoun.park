@@ -4,20 +4,25 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-public class Post {
+public class Post extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 255)
     private String title;
+
+    @Column(nullable = false, length = 255)
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     private Category category;
 
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
     private int viewCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
