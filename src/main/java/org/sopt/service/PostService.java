@@ -18,7 +18,9 @@ public class PostService {
     }
 
     public void writePost(String title, String content, Category category) {
-        Post post = new Post(title, content, category);
+        int id = postRepository.nextId();
+
+        Post post = new Post(id, title, content, category);
         postRepository.save(post);
     }
 
@@ -26,8 +28,8 @@ public class PostService {
         return postRepository.findAll();
     }
 
-    public Post readPost(int index) {
-        Post post = postRepository.findByIndex(index);
+    public Post findPost(int postId){
+        Post post = postRepository.findById(postId);
 
         if (post == null) {
             throw new NoSuchElementException("존재하지 않는 게시글입니다.");
@@ -36,13 +38,20 @@ public class PostService {
         return post;
     }
 
+    public Post readPost(int postId) {
+        Post post = postRepository.findById(postId);
+        post.increaseViewCount();
+
+        return post;
+    }
+
     public void editPost(int index, String title, String content) {
-        Post post = readPost(index);
+        Post post = findPost(index);
         post.update(title, content);
     }
 
     public void removePost(int index) {
-        readPost(index);
+        findPost(index);
         postRepository.delete(index);
     }
 }
