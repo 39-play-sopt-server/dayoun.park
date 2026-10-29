@@ -1,7 +1,6 @@
 package org.sopt.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 public class Post extends BaseEntity{
@@ -19,8 +18,6 @@ public class Post extends BaseEntity{
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private Category category;
-
-    private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private int viewCount = 0;
@@ -41,7 +38,6 @@ public class Post extends BaseEntity{
         this.content = content;
         this.category = category;
         this.member = member;
-        this.createdAt = LocalDateTime.now();
     }
 
     private void validate(String title, String content, Category category, Member member) {
@@ -79,10 +75,6 @@ public class Post extends BaseEntity{
     }
 
     public Member getMember() { return member;}
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
 
     public void update(String title, String content) {
         validate(title, content, this.category, this.member);
