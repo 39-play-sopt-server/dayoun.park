@@ -1,8 +1,8 @@
 package org.sopt.controller;
 
+import org.sopt.dto.PageResponse;
 import org.sopt.dto.PostResponse;
 import org.sopt.model.Category;
-import org.sopt.model.Post;
 import org.sopt.service.PostService;
 import org.sopt.common.ApiResponse;
 
@@ -11,8 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 @Tag(name = "게시글", description = "게시글 작성, 조회, 수정, 삭제 API")
 @RestController
@@ -45,16 +44,21 @@ public class PostController {
                 ));
     }
 
-    @Operation(summary= "게시글 목록 조회")
+    @Operation(summary = "게시글 목록 조회")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PostResponse>>> readPostList() {
-        List<PostResponse> posts = postService.readPostList();
+    public ResponseEntity<ApiResponse<PageResponse<PostResponse>>> readPostList(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        Page<PostResponse> posts = postService.readPostList(page, size);
+
+        PageResponse<PostResponse> pageResponse = PageResponse.from(posts);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "POST_LIST_READ",
                         "게시글 목록을 조회했습니다.",
-                        posts
+                        pageResponse
                 )
         );
     }

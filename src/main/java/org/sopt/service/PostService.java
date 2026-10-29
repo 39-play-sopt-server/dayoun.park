@@ -8,6 +8,10 @@ import org.sopt.model.Post;
 import org.sopt.repository.MemberRepository;
 import org.sopt.repository.PostRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -47,18 +51,28 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostResponse> readPostList() {
-        List<Post> posts = postRepository.findAll();
+    public Page<PostResponse> readPostList(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new IllegalArgumentException(
+                    "페이지는 0 이상, 크기는 1~100이어야 합니다."
+            );
+        }
 
-        return posts.stream()
-                .map(post -> new PostResponse(
-                        post.getId(),
-                        post.getTitle(),
-                        post.getContent(),
-                        post.getMember().getName(),
-                        post.getViewCount()
-                ))
-                .toList();
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt", "id")
+        );
+
+        Page<Post> posts = postRepository.findAll(pageable);
+
+        return posts.map(post -> new PostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getMember().getName(),
+                post.getViewCount()
+        ));
     }
 
     @Transactional(readOnly = true)
