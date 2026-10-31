@@ -1,7 +1,8 @@
 package org.sopt.controller;
 
+import org.sopt.dto.PageResponse;
+import org.sopt.dto.PostResponse;
 import org.sopt.model.Category;
-import org.sopt.model.Post;
 import org.sopt.service.PostService;
 import org.sopt.common.ApiResponse;
 
@@ -10,8 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 @Tag(name = "게시글", description = "게시글 작성, 조회, 수정, 삭제 API")
 @RestController
@@ -30,10 +30,11 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> writePost(
             @RequestParam("title") String title,
             @RequestParam("content") String content,
-            @RequestParam("category") Category category
+            @RequestParam("category") Category category,
+            @RequestParam("memberId") Long memberId
     )
     {
-        postService.writePost(title, content, category);
+        postService.writePost(title, content, category, memberId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<Void>success(
@@ -43,16 +44,21 @@ public class PostController {
                 ));
     }
 
-    @Operation(summary= "게시글 목록 조회")
+    @Operation(summary = "게시글 목록 조회")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Post>>> readPostList() {
-        List<Post> posts = postService.readPostList();
+    public ResponseEntity<ApiResponse<PageResponse<PostResponse>>> readPostList(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        Page<PostResponse> posts = postService.readPostList(page, size);
+
+        PageResponse<PostResponse> pageResponse = PageResponse.from(posts);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "POST_LIST_READ",
                         "게시글 목록을 조회했습니다.",
-                        posts
+                        pageResponse
                 )
         );
     }
@@ -62,16 +68,16 @@ public class PostController {
             description = "게시글을 상세 조회하면 조회수가 1 증가합니다."
     )
     @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<Post>> readPost(
-            @PathVariable("postId") int postId
+    public ResponseEntity<ApiResponse<PostResponse>> readPost(
+            @PathVariable("postId") Long postId
     ) {
-        Post post = postService.readPost(postId);
+        PostResponse postResponse = postService.readPost(postId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "POST_READ",
                         "게시글을 조회했습니다.",
-                        post
+                        postResponse
                 )
         );
     }
@@ -79,7 +85,7 @@ public class PostController {
     @Operation(summary = "게시글 제목과 본문 수정")
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> editPost(
-            @PathVariable("postId") int postId,
+            @PathVariable("postId") Long postId,
             @RequestParam("title") String title,
             @RequestParam("content") String content
     ) {
@@ -97,7 +103,7 @@ public class PostController {
     @Operation(summary = "게시글 삭제")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> removePost(
-            @PathVariable("postId") int postId
+            @PathVariable("postId") Long postId
     ) {
         postService.removePost(postId);
 
