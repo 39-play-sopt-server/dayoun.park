@@ -1,10 +1,10 @@
 package org.sopt.service;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.sopt.model.Member;
 import org.sopt.model.RefreshToken;
 import org.sopt.provider.JwtProvider;
+import org.sopt.provider.JwtProvider.RefreshIdentity;
 import org.sopt.repository.MemberRepository;
 import org.sopt.repository.RefreshTokenRepository;
 import org.springframework.http.HttpStatus;
@@ -98,14 +98,7 @@ public class AuthService {
         }
 
         try {
-            Claims claims = jwtProvider.parseRefreshToken(refreshToken);
-            Long memberId = Long.valueOf(claims.getSubject());
-
-            if (claims.getId() == null || claims.getId().isBlank()) {
-                throw invalidRefreshToken();
-            }
-
-            return new RefreshIdentity(claims.getId(), memberId);
+            return jwtProvider.readRefreshIdentity(refreshToken);
         } catch (JwtException | IllegalArgumentException e) {
             throw invalidRefreshToken();
         }
@@ -116,8 +109,6 @@ public class AuthService {
                 HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."
         );
     }
-
-    private record RefreshIdentity(String id, Long memberId) {}
 
     public record IssuedTokens(String accessToken, String refreshToken) {}
 }

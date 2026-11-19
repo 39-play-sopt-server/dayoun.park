@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private Long readMemberId(String token) {
         try {
-            return jwtProvider.getMemberId(token);
+            return jwtProvider.readAccessMemberId(token);
         } catch (JwtException | IllegalArgumentException e) {
             return null;
         }
