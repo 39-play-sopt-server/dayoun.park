@@ -19,7 +19,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "DELETE",
                         "OPTIONS"
                 )
-                .allowedHeaders("Content-Type", "Authorization")
+                .allowedHeaders("Content-Type", "Authorization", "X-Refresh-Request")
+                .allowCredentials(true)
                 .maxAge(3600);
     }
 }

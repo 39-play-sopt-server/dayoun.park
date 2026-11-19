@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.sopt.provider.JwtProvider;
+import org.sopt.repository.MemberRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,35 +20,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtProvider jwtProvider;
+    private final MemberRepository memberRepository;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider) {
+    public JwtAuthenticationFilter(JwtProvider jwtProvider, MemberRepository memberRepository) {
         this.jwtProvider = jwtProvider;
+        this.memberRepository = memberRepository;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
         String token = resolveToken(request);
+        Long memberId = token == null ? null : readMemberId(token);
 
-        if (token != null) {
-            try {
-                Long memberId = jwtProvider.getMemberId(token);
-                // getMemberId() 메서드에서 이미 검증 로직을 작성해놨음.
-                // 검증, 추출 부분 분리 여부 검토.
-
-                // 인증 완료된 Authentication 생성 후 SecurityContext에 저장
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(memberId, null, List.of()); // 아직 권한 설정 하지 않았기 때문에 List.of()라는 빈 배열 넣기
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (JwtException | IllegalArgumentException e) {
-                // 유효하지 않은 토큰이면 인증 정보를 저장하지 않음
-                // 프린트문 추가 여부 검토
-            }
+        if (memberId != null && memberRepository.existsById(memberId)) {
+            var authentication = UsernamePasswordAuthenticationToken.authenticated(
+                    memberId, null, List.of()
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
-        // 이 코드를 작성해야 다음 필터로 넘어갈 수 있음.
+    }
+
+    private Long readMemberId(String token) {
+        try {
+            return jwtProvider.readAccessMemberId(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private String resolveToken(HttpServletRequest request) {

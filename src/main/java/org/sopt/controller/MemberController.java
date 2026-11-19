@@ -1,7 +1,6 @@
 package org.sopt.controller;
 
 import org.sopt.common.ApiResponse;
-import org.sopt.service.AuthService;
 import org.sopt.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,11 +11,9 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
-    private final AuthService authService;
 
-    public MemberController(MemberService memberService, AuthService authService) {
+    public MemberController(MemberService memberService) {
         this.memberService = memberService;
-        this.authService = authService;
     }
 
     @GetMapping("/me")
@@ -32,9 +29,9 @@ public class MemberController {
         );
     }
 
-    @DeleteMapping("/{memberId}")
-    public ResponseEntity<ApiResponse<Void>> removeMember (
-            @PathVariable("memberId") Long memberId
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> removeMember(
+            @AuthenticationPrincipal Long memberId
     ) {
         memberService.removeMember(memberId);
         return ResponseEntity.ok(

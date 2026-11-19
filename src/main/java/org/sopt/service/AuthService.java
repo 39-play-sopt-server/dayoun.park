@@ -1,11 +1,19 @@
 package org.sopt.service;
 
+import io.jsonwebtoken.JwtException;
 import org.sopt.model.Member;
+import org.sopt.model.RefreshToken;
 import org.sopt.provider.JwtProvider;
+import org.sopt.provider.JwtProvider.RefreshIdentity;
 import org.sopt.repository.MemberRepository;
+import org.sopt.repository.RefreshTokenRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -13,11 +21,18 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public AuthService(MemberRepository memberRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
+    public AuthService(
+            MemberRepository memberRepository,
+            PasswordEncoder passwordEncoder,
+            JwtProvider jwtProvider,
+            RefreshTokenRepository refreshTokenRepository
+    ) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @Transactional
@@ -31,15 +46,69 @@ public class AuthService {
         return memberRepository.save(member).getId();
     }
 
-    @Transactional(readOnly = true)
-    public String login(String email, String password) {
+    @Transactional
+    public IssuedTokens login(String email, String password) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."
+                ));
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."
+            );
         }
 
-        return jwtProvider.createAccessToken(member.getId());
+        String refreshId = UUID.randomUUID().toString();
+        String accessToken = jwtProvider.createAccessToken(member.getId());
+        String refreshToken = jwtProvider.createRefreshToken(member.getId(), refreshId);
+
+        refreshTokenRepository.save(new RefreshToken(refreshId, member));
+        return new IssuedTokens(accessToken, refreshToken);
     }
+
+    @Transactional(readOnly = true)
+    public String reissueAccessToken(String refreshToken) {
+        RefreshIdentity refresh = readRefreshIdentity(refreshToken);
+
+        if (!refreshTokenRepository.existsByIdAndMember_Id(refresh.id(), refresh.memberId())) {
+            throw invalidRefreshToken();
+        }
+
+        return jwtProvider.createAccessToken(refresh.memberId());
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        RefreshIdentity refresh;
+
+        try {
+            refresh = readRefreshIdentity(refreshToken);
+        } catch (ResponseStatusException e) {
+            // 쿠키가 없거나 이미 만료된 경우에도 클라이언트의 쿠키는 지운다.
+            return;
+        }
+
+        refreshTokenRepository.revoke(refresh.id(), refresh.memberId());
+    }
+
+    private RefreshIdentity readRefreshIdentity(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw invalidRefreshToken();
+        }
+
+        try {
+            return jwtProvider.readRefreshIdentity(refreshToken);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw invalidRefreshToken();
+        }
+    }
+
+    private ResponseStatusException invalidRefreshToken() {
+        return new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."
+        );
+    }
+
+    public record IssuedTokens(String accessToken, String refreshToken) {}
 }
