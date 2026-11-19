@@ -17,12 +17,6 @@ public class MemberService {
     }
 
     @Transactional
-    public Member createMember(String name) {
-        Member member = new Member(name);
-        return memberRepository.save(member);
-    }
-
-    @Transactional
     public void removeMember(Long memberId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() ->

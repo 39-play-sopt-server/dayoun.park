@@ -3,6 +3,7 @@ package org.sopt.exception;
 import org.sopt.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -74,5 +75,13 @@ public class GlobalExceptionHandler
                         "INTERNAL_SERVER_ERROR",
                         "서버 내부 오류가 발생했습니다."
                 ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class) // 작성자 확인 시 사용
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
+            AccessDeniedException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.failure("FORBIDDEN", exception.getMessage()));
     }
 }

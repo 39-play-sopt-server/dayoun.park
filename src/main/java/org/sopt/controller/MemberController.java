@@ -1,10 +1,10 @@
 package org.sopt.controller;
 
 import org.sopt.common.ApiResponse;
-import org.sopt.model.Member;
+import org.sopt.service.AuthService;
 import org.sopt.service.MemberService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,23 +12,24 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
+    private final AuthService authService;
 
-    public MemberController(MemberService memberService) {
+    public MemberController(MemberService memberService, AuthService authService) {
         this.memberService = memberService;
+        this.authService = authService;
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<Member>> createMember(
-            @RequestParam("name") String name
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Long>> me(
+            @AuthenticationPrincipal Long memberId
     ) {
-        Member member = memberService.createMember(name);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(
-                        "MEMBER_CREATED",
-                        "회원이 생성되었습니다.",
-                        member
-                ));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "MEMBER_ME_READ",
+                        "내 회원 정보를 조회했습니다.",
+                        memberId
+                )
+        );
     }
 
     @DeleteMapping("/{memberId}")

@@ -1,5 +1,6 @@
 package org.sopt.controller;
 
+import jakarta.validation.constraints.NotBlank;
 import org.sopt.dto.PageResponse;
 import org.sopt.dto.PostResponse;
 import org.sopt.model.Category;
@@ -8,6 +9,7 @@ import org.sopt.common.ApiResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,10 +30,10 @@ public class PostController {
     @Operation(summary= "게시글 작성")
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> writePost(
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
+            @RequestParam("title") @NotBlank String title,
+            @RequestParam("content") @NotBlank String content,
             @RequestParam("category") Category category,
-            @RequestParam("memberId") Long memberId
+            @AuthenticationPrincipal Long memberId
     )
     {
         postService.writePost(title, content, category, memberId);
@@ -87,9 +89,10 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> editPost(
             @PathVariable("postId") Long postId,
             @RequestParam("title") String title,
-            @RequestParam("content") String content
+            @RequestParam("content") String content,
+            @AuthenticationPrincipal Long memberId
     ) {
-        postService.editPost(postId, title, content);
+        postService.editPost(postId, title, content, memberId);
 
         return ResponseEntity.ok(
                 ApiResponse.<Void>success(
@@ -103,9 +106,10 @@ public class PostController {
     @Operation(summary = "게시글 삭제")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> removePost(
-            @PathVariable("postId") Long postId
+            @PathVariable("postId") Long postId,
+            @AuthenticationPrincipal Long memberId
     ) {
-        postService.removePost(postId);
+        postService.removePost(postId, memberId);
 
         return ResponseEntity.ok(
                 ApiResponse.<Void>success(
