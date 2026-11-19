@@ -1,9 +1,12 @@
 package org.sopt.config;
 
+import jakarta.servlet.DispatcherType;
 import org.sopt.filter.JwtAuthenticationFilter;
 import org.sopt.provider.JwtProvider;
+import org.sopt.repository.MemberRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,9 +24,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final MemberRepository memberRepository;
 
-    public SecurityConfig(JwtProvider jwtProvider) {
+    public SecurityConfig(JwtProvider jwtProvider, MemberRepository memberRepository) {
         this.jwtProvider = jwtProvider;
+        this.memberRepository = memberRepository;
     }
 
     @Bean
@@ -31,24 +36,23 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                // CSRF 비활성화, Authorization 헤더로 보내면 CSRF의 전제 조건이 없기 때문
-                .csrf(AbstractHttpConfigurer::disable)
-                // 폼 로그인, HTTP Basic 비활성화
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                // 세션 STATELESS
+                .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // URL별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/auth/signup", "/auth/login", "/auth/refresh", "/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts", "/posts/{postId}").permitAll()
                         .anyRequest().authenticated())
-                // 인증 실패 시 401 응답
-                .exceptionHandling(e -> e
+                .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-                // JWT 인증 필터 추가
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider),
-                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtProvider, memberRepository),
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .build();
     }
 

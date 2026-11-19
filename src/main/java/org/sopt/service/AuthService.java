@@ -78,6 +78,20 @@ public class AuthService {
         return jwtProvider.createAccessToken(refresh.memberId());
     }
 
+    @Transactional
+    public void logout(String refreshToken) {
+        RefreshIdentity refresh;
+
+        try {
+            refresh = readRefreshIdentity(refreshToken);
+        } catch (ResponseStatusException e) {
+            // 쿠키가 없거나 이미 만료된 경우에도 클라이언트의 쿠키는 지운다.
+            return;
+        }
+
+        refreshTokenRepository.revoke(refresh.id(), refresh.memberId());
+    }
+
     private RefreshIdentity readRefreshIdentity(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw invalidRefreshToken();

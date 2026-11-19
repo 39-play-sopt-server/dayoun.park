@@ -95,6 +95,20 @@ public class AuthController {
                 ));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
+            @RequestHeader(name = REFRESH_REQUEST_HEADER, defaultValue = "") String refreshRequest
+    ) {
+        checkRefreshRequest(refreshRequest);
+        authService.logout(refreshToken);
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString())
+                .body(ApiResponse.success("LOGOUT_SUCCESS", "로그아웃했습니다.", null));
+    }
+
     private void checkRefreshRequest(String refreshRequest) {
         if (!"1".equals(refreshRequest)) {
             throw new AccessDeniedException("허용되지 않은 인증 요청입니다.");
