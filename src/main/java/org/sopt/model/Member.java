@@ -10,24 +10,38 @@ public class Member extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "name",  nullable = false, length = 50)
     private String name;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
 
     protected Member() {}
 
-    public Member(String name){
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("회원 이름은 비어 있을 수 없습니다.");
+    public Member(String name, String email, String password){
+        {
+            this.name = name;
+            this.email = email;
+            this.password = password;
         }
-
-        this.name = name;
     }
 
     public Long getId() {
         return id;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }

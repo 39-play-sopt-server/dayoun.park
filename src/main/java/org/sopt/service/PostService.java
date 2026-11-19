@@ -1,6 +1,7 @@
 package org.sopt.service;
 
 import org.sopt.dto.PostResponse;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 import org.sopt.model.Category;
 import org.sopt.model.Member;
@@ -98,14 +99,22 @@ public class PostService {
     }
 
     @Transactional
-    public void editPost(Long postId, String title, String content) {
+    public void editPost(Long postId, String title, String content, Long memberId) {
         Post post = findPost(postId);
+        checkAuthor(post, memberId);
         post.update(title, content);
     }
 
     @Transactional
-    public void removePost(Long postId) {
-        findPost(postId);
+    public void removePost(Long postId, Long memberId) {
+        Post post = findPost(postId);
+        checkAuthor(post, memberId);
         postRepository.deleteById(postId);
+    }
+
+    private void checkAuthor(Post post, Long memberId) {
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new AccessDeniedException("본인의 게시글만 수정하거나 삭제할 수 있습니다.");
+        }
     }
 }
